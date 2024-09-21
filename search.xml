@@ -22,9 +22,9 @@
             
             <tag> 前端 </tag>
             
-            <tag> react </tag>
-            
             <tag> 笔记 </tag>
+            
+            <tag> react </tag>
             
         </tags>
       
@@ -51,9 +51,9 @@
             
             <tag> 前端 </tag>
             
-            <tag> 笔记 </tag>
-            
             <tag> ts </tag>
+            
+            <tag> 笔记 </tag>
             
         </tags>
       
@@ -80,9 +80,9 @@
             
             <tag> 前端 </tag>
             
-            <tag> react </tag>
-            
             <tag> 笔记 </tag>
+            
+            <tag> react </tag>
             
         </tags>
       
@@ -109,9 +109,9 @@
             
             <tag> 前端 </tag>
             
-            <tag> 笔记 </tag>
-            
             <tag> ts </tag>
+            
+            <tag> 笔记 </tag>
             
         </tags>
       
@@ -136,38 +136,9 @@
       
         <tags>
             
-            <tag> 游戏 </tag>
-            
             <tag> 杂谈 </tag>
             
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>ts笔记（一期）</title>
-      <link href="/2024/08/21/ts%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%E6%9C%9F%EF%BC%89/"/>
-      <url>/2024/08/21/ts%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%E6%9C%9F%EF%BC%89/</url>
-      
-        <content type="html"><![CDATA[<h1 id="ts"><a href="#ts" class="headerlink" title="ts"></a>ts</h1><h2 id="标识符的类型推导"><a href="#标识符的类型推导" class="headerlink" title="标识符的类型推导"></a>标识符的类型推导</h2><p>let 进行类型推导,推导出来的通用类型<br>const 进行类型推导,推导出来的字面量类型</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> message = <span class="string">&quot;aaaa&quot;</span>;</span><br><span class="line"><span class="comment">//message 已经被推断为了 字符串类型</span></span><br></pre></td></tr></table></figure><h2 id="ts-的数据类型"><a href="#ts-的数据类型" class="headerlink" title="ts 的数据类型"></a>ts 的数据类型</h2><h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><p>明确的指定 数组的 类型注解</p><p>在 ts 中 数组中一般存放<strong>相同类型</strong>的数据</p><ol><li>第一种写法 string[ ];</li><li>第二种 Array<T> 泛型</li></ol><h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><p>函数 要求传入值最好确定类型 返回值可以进行类型推断</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">sum</span>(<span class="params">num1: number, num2: number</span>): number &#123;</span><br><span class="line">  <span class="keyword">return</span> num1 + num2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>在 TypeScript 中，你可以使用函数类型来定义函数的类型和结构。函数类型可以很灵活地定义参数和返回值的类型，这对于编写类型安全的代码非常有用。</p><p>以下是一些函数类型的示例：</p><p>定义函数类型</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个函数类型，接受两个参数并返回一个 number 类型的值</span></span><br><span class="line">type <span class="title class_">MyFunctionType</span> = <span class="function">(<span class="params">a: number, b: number</span>) =&gt;</span> number;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用定义好的函数类型来声明一个变量</span></span><br><span class="line"><span class="keyword">let</span> <span class="attr">myFunction</span>: <span class="title class_">MyFunctionType</span> = <span class="function">(<span class="params">x, y</span>) =&gt;</span> x + y;</span><br></pre></td></tr></table></figure><p>函数类型作为参数</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个接受函数类型作为参数的函数</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">executeOperation</span>(<span class="params">operation: (a: number, b: number) =&gt; number, x: number, y: number</span>): number &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="title function_">operation</span>(x, y);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用函数，传入具体的函数作为参数</span></span><br><span class="line"><span class="keyword">let</span> result = <span class="title function_">executeOperation</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span> a \* b, <span class="number">3</span>, <span class="number">4</span>); <span class="comment">// result 的值为 12</span></span><br></pre></td></tr></table></figure><p>可选参数和默认参数<br>函数类型也可以包含可选参数和默认参数：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">type <span class="title class_">ConcatenateStrings</span> = <span class="function">(<span class="params">a: string, b?: string</span>) =&gt;</span> string;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">concat</span>: <span class="title class_">ConcatenateStrings</span> = <span class="function">(<span class="params">str1, str2 = <span class="string">&quot; World&quot;</span></span>) =&gt;</span> str1 + str2;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">concat</span>(<span class="string">&quot;Hello&quot;</span>)); <span class="comment">// 输出 &quot;Hello World&quot;</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">concat</span>(<span class="string">&quot;Hello&quot;</span>, <span class="string">&quot; Fitten&quot;</span>)); <span class="comment">// 输出 &quot;Hello Fitten&quot;</span></span><br></pre></td></tr></table></figure><p>剩余参数<br>函数类型还可以使用剩余参数：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">type <span class="title class_">JoinStrings</span> = <span class="function">(<span class="params">...str: string[]</span>) =&gt;</span> string;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">join</span>: <span class="title class_">JoinStrings</span> = <span class="function">(<span class="params">...str</span>) =&gt;</span> str.<span class="title function_">join</span>(<span class="string">&quot; &quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">join</span>(<span class="string">&quot;Hello&quot;</span>, <span class="string">&quot;Fitten&quot;</span>, <span class="string">&quot;Code&quot;</span>)); <span class="comment">// 输出 &quot;Hello Fitten Code&quot;</span></span><br></pre></td></tr></table></figure><h3 id="unknown-类型"><a href="#unknown-类型" class="headerlink" title="unknown 类型"></a>unknown 类型</h3><p>在 TypeScript 或 JavaScript 中，”unknown” 是一种类型，它表示一个值可以是任何类型。与 “any” 类型不同的是，”unknown” 类型更为严格，因为它会强制你在使用它之前进行类型检查或类型断言。</p><p>以下是一个简单的示例，展示了如何使用 “unknown” 类型：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">doSomething</span>(<span class="params">value: unknown</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">&quot;string&quot;</span>) &#123;</span><br><span class="line">    <span class="comment">//类型缩小</span></span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(value.<span class="title function_">toUpperCase</span>());</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">&quot;number&quot;</span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(value.<span class="title function_">toFixed</span>(<span class="number">2</span>));</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Unsupported type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">myVar</span>: unknown = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line"><span class="title function_">doSomething</span>(myVar); <span class="comment">// 输出 &quot;HELLO&quot;</span></span><br><span class="line"></span><br><span class="line">myVar = <span class="number">42</span>;</span><br><span class="line"><span class="title function_">doSomething</span>(myVar); <span class="comment">// 输出 &quot;42.00&quot;</span></span><br></pre></td></tr></table></figure><h3 id="void-类型"><a href="#void-类型" class="headerlink" title="void 类型"></a>void 类型</h3><p>在 TypeScript 或 JavaScript 中，”void” 是一种特殊的类型，用来表示函数没有返回值。如果一个函数不返回任何值，它的返回类型通常会被标记为 “void”。</p><p>以下是一个简单的示例，展示了如何使用 “void” 类型：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">greet</span>(<span class="params"></span>): <span class="keyword">void</span> &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Hello there!&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">calculateSum</span>(<span class="params">a: number, b: number</span>): <span class="keyword">void</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> result = a + b;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;The sum is: &quot;</span> + result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>在这个示例中，我们定义了两个函数 greet 和 calculateSum，它们的返回类型都被标记为 “void”，因为它们并不返回任何值。</p><h3 id="never类型"><a href="#never类型" class="headerlink" title="never类型"></a>never类型</h3><p>开发中很少定义never类型 ，开发框架时候可能会用到never类型;</p><p>封装类型工具时可能用到</p><p>给同事看的 ,在扩展工具时 对其他case直接报错</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 前端 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 前端 </tag>
-            
-            <tag> 笔记 </tag>
-            
-            <tag> ts </tag>
+            <tag> 游戏 </tag>
             
         </tags>
       
@@ -194,9 +165,38 @@
             
             <tag> 前端 </tag>
             
+            <tag> ts </tag>
+            
             <tag> 笔记 </tag>
             
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>ts笔记（一期）</title>
+      <link href="/2024/08/21/ts%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%E6%9C%9F%EF%BC%89/"/>
+      <url>/2024/08/21/ts%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%E6%9C%9F%EF%BC%89/</url>
+      
+        <content type="html"><![CDATA[<h1 id="ts"><a href="#ts" class="headerlink" title="ts"></a>ts</h1><h2 id="标识符的类型推导"><a href="#标识符的类型推导" class="headerlink" title="标识符的类型推导"></a>标识符的类型推导</h2><p>let 进行类型推导,推导出来的通用类型<br>const 进行类型推导,推导出来的字面量类型</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> message = <span class="string">&quot;aaaa&quot;</span>;</span><br><span class="line"><span class="comment">//message 已经被推断为了 字符串类型</span></span><br></pre></td></tr></table></figure><h2 id="ts-的数据类型"><a href="#ts-的数据类型" class="headerlink" title="ts 的数据类型"></a>ts 的数据类型</h2><h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><p>明确的指定 数组的 类型注解</p><p>在 ts 中 数组中一般存放<strong>相同类型</strong>的数据</p><ol><li>第一种写法 string[ ];</li><li>第二种 Array<T> 泛型</li></ol><h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><p>函数 要求传入值最好确定类型 返回值可以进行类型推断</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">sum</span>(<span class="params">num1: number, num2: number</span>): number &#123;</span><br><span class="line">  <span class="keyword">return</span> num1 + num2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>在 TypeScript 中，你可以使用函数类型来定义函数的类型和结构。函数类型可以很灵活地定义参数和返回值的类型，这对于编写类型安全的代码非常有用。</p><p>以下是一些函数类型的示例：</p><p>定义函数类型</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个函数类型，接受两个参数并返回一个 number 类型的值</span></span><br><span class="line">type <span class="title class_">MyFunctionType</span> = <span class="function">(<span class="params">a: number, b: number</span>) =&gt;</span> number;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用定义好的函数类型来声明一个变量</span></span><br><span class="line"><span class="keyword">let</span> <span class="attr">myFunction</span>: <span class="title class_">MyFunctionType</span> = <span class="function">(<span class="params">x, y</span>) =&gt;</span> x + y;</span><br></pre></td></tr></table></figure><p>函数类型作为参数</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个接受函数类型作为参数的函数</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">executeOperation</span>(<span class="params">operation: (a: number, b: number) =&gt; number, x: number, y: number</span>): number &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="title function_">operation</span>(x, y);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用函数，传入具体的函数作为参数</span></span><br><span class="line"><span class="keyword">let</span> result = <span class="title function_">executeOperation</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span> a \* b, <span class="number">3</span>, <span class="number">4</span>); <span class="comment">// result 的值为 12</span></span><br></pre></td></tr></table></figure><p>可选参数和默认参数<br>函数类型也可以包含可选参数和默认参数：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">type <span class="title class_">ConcatenateStrings</span> = <span class="function">(<span class="params">a: string, b?: string</span>) =&gt;</span> string;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">concat</span>: <span class="title class_">ConcatenateStrings</span> = <span class="function">(<span class="params">str1, str2 = <span class="string">&quot; World&quot;</span></span>) =&gt;</span> str1 + str2;</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">concat</span>(<span class="string">&quot;Hello&quot;</span>)); <span class="comment">// 输出 &quot;Hello World&quot;</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">concat</span>(<span class="string">&quot;Hello&quot;</span>, <span class="string">&quot; Fitten&quot;</span>)); <span class="comment">// 输出 &quot;Hello Fitten&quot;</span></span><br></pre></td></tr></table></figure><p>剩余参数<br>函数类型还可以使用剩余参数：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">type <span class="title class_">JoinStrings</span> = <span class="function">(<span class="params">...str: string[]</span>) =&gt;</span> string;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">join</span>: <span class="title class_">JoinStrings</span> = <span class="function">(<span class="params">...str</span>) =&gt;</span> str.<span class="title function_">join</span>(<span class="string">&quot; &quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">join</span>(<span class="string">&quot;Hello&quot;</span>, <span class="string">&quot;Fitten&quot;</span>, <span class="string">&quot;Code&quot;</span>)); <span class="comment">// 输出 &quot;Hello Fitten Code&quot;</span></span><br></pre></td></tr></table></figure><h3 id="unknown-类型"><a href="#unknown-类型" class="headerlink" title="unknown 类型"></a>unknown 类型</h3><p>在 TypeScript 或 JavaScript 中，”unknown” 是一种类型，它表示一个值可以是任何类型。与 “any” 类型不同的是，”unknown” 类型更为严格，因为它会强制你在使用它之前进行类型检查或类型断言。</p><p>以下是一个简单的示例，展示了如何使用 “unknown” 类型：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">doSomething</span>(<span class="params">value: unknown</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">&quot;string&quot;</span>) &#123;</span><br><span class="line">    <span class="comment">//类型缩小</span></span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(value.<span class="title function_">toUpperCase</span>());</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">&quot;number&quot;</span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(value.<span class="title function_">toFixed</span>(<span class="number">2</span>));</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Unsupported type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="attr">myVar</span>: unknown = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line"><span class="title function_">doSomething</span>(myVar); <span class="comment">// 输出 &quot;HELLO&quot;</span></span><br><span class="line"></span><br><span class="line">myVar = <span class="number">42</span>;</span><br><span class="line"><span class="title function_">doSomething</span>(myVar); <span class="comment">// 输出 &quot;42.00&quot;</span></span><br></pre></td></tr></table></figure><h3 id="void-类型"><a href="#void-类型" class="headerlink" title="void 类型"></a>void 类型</h3><p>在 TypeScript 或 JavaScript 中，”void” 是一种特殊的类型，用来表示函数没有返回值。如果一个函数不返回任何值，它的返回类型通常会被标记为 “void”。</p><p>以下是一个简单的示例，展示了如何使用 “void” 类型：</p><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">greet</span>(<span class="params"></span>): <span class="keyword">void</span> &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Hello there!&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">calculateSum</span>(<span class="params">a: number, b: number</span>): <span class="keyword">void</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> result = a + b;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;The sum is: &quot;</span> + result);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>在这个示例中，我们定义了两个函数 greet 和 calculateSum，它们的返回类型都被标记为 “void”，因为它们并不返回任何值。</p><h3 id="never类型"><a href="#never类型" class="headerlink" title="never类型"></a>never类型</h3><p>开发中很少定义never类型 ，开发框架时候可能会用到never类型;</p><p>封装类型工具时可能用到</p><p>给同事看的 ,在扩展工具时 对其他case直接报错</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 前端 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 前端 </tag>
+            
             <tag> ts </tag>
+            
+            <tag> 笔记 </tag>
             
         </tags>
       
