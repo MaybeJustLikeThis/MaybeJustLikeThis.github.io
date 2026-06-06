@@ -1,0 +1,344 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的 | MaybeJustLikeThis</title><meta name="author" content="MaybeJustLikeThis"><meta name="copyright" content="MaybeJustLikeThis"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="从 ReAct 模式出发，解释为什么裸 Agent 上不了生产环境，以及 Harness 工程要解决的核心问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的">
+<meta property="og:url" content="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/index.html">
+<meta property="og:site_name" content="MaybeJustLikeThis">
+<meta property="og:description" content="从 ReAct 模式出发，解释为什么裸 Agent 上不了生产环境，以及 Harness 工程要解决的核心问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg">
+<meta property="article:published_time" content="2026-06-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-06T06:43:07.080Z">
+<meta property="article:author" content="MaybeJustLikeThis">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的",
+  "url": "https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/",
+  "image": "https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg",
+  "datePublished": "2026-06-05T16:00:00.000Z",
+  "dateModified": "2026-06-06T06:43:07.080Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "MaybeJustLikeThis",
+      "url": "https://maybejustlikethis.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/images/logo.png"><link rel="canonical" href="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//busuanzi.ibruce.info"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.json","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="web_bg" style="background-image: url(https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E6%9C%88%E7%89%99%E5%B0%8F%E6%8F%90%E7%90%B4.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/images/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background: transparent;"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.png" alt="Logo" loading='lazy'><span class="site-name">MaybeJustLikeThis</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-06-06T06:43:07.080Z" title="更新于 2026-06-06 14:43:07">2026-06-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AI/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>9分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id data-flag-title><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
+<p>能做和能上线之间，隔着一条叫”可靠性”的鸿沟。</p>
+</blockquote>
+<p>ChatGPT 刚出来那会儿，很多人都有过一种错觉：这东西太强了，给它接上 API、挂上工具，是不是就能代替人干活了？我自己也这么想过。你让它帮你查个天气、订个外卖，它确实能聊得头头是道，感觉离”数字员工”就差一步。</p>
+<p>但真动手做过 Agent 项目的人都知道，从”能聊天”到”能干活”这一步，远比想象中难。差距不在提示词写得好不好——Chatbot 只需要把话说对，Agent 还要把事做对。前者出错了你最多翻个白眼，后者出错了你可能是数据库没了。</p>
+<p>所以一个能干活的 Agent，最小可行结构是什么样的？从 Demo 里跑通一个 Agent 到真正把它推上生产，中间到底缺了什么？这篇文章想聊聊这件事。</p>
+<p>先从最基本的结构讲起。不管外面包装得多花哨，一个 Agent 的核心循环其实就这么简单：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> <span class="keyword">not</span> done:</span><br><span class="line">    thought = llm.think(context)      <span class="comment"># 想</span></span><br><span class="line">    action = llm.decide(thought)      <span class="comment"># 决定做什么</span></span><br><span class="line">    observation = tools.execute(action)  <span class="comment"># 做</span></span><br><span class="line">    context.update(observation)       <span class="comment"># 把结果记下来</span></span><br></pre></td></tr></table></figure>
+
+<p>就这几行。想、做、看、记，循环往复，直到任务完成。几乎所有 Agent 框架——不管是 LangChain 的 AgentExecutor 还是 AutoGPT 的主循环——本质上都是这个结构的变体。</p>
+<p>这个循环里有三个组件：LLM 是大脑，负责理解意图、规划步骤、做出决策；Tools 是手脚，搜索引擎、数据库、API、文件系统，都是 Agent 和外部世界交互的通道；Memory 是记忆，让 Agent 知道自己之前干了什么、走到哪一步了。没有记忆的 Agent 就像一个失忆症患者，每一步都在重复上一轮的思考。</p>
+<p>把这三个东西拼到一起，就得到了 ReAct 模式。ReAct 是 Reasoning + Acting 的缩写，最早在 2022 年的一篇论文里被系统地提出来。它的核心直觉很朴素：Agent 不应该”想完再动”或者”不动只想”，而应该边想边动、边动边想。每一步思考之后立即执行一个动作，观察动作的结果，再基于这个结果决定下一步。Thought → Action → Observation，循环推进。</p>
+<p>这个模式之所以成为事实上的标准，就是因为它足够自然。人解决复杂问题的时候就是这么干的——你不会在脑子里把所有步骤都推演完毕再动手，你先做一步看看结果，然后调整。ReAct 把这个直觉形式化了。</p>
+<p>但 ReAct 是一个好的起点，却不是一个好的终点。它只解决了 Agent “能不能跑”的问题，没解决”能不能靠谱地跑”的问题。</p>
+<p>这就引出了一个更现实的问题：为什么裸 Agent 上不了生产？</p>
+<p>说”上不了”可能有点绝对。更准确地说，一个没有工程包装的裸 Agent，在生产环境中几乎必然失败。失败的方式还挺多样的：</p>
+<ul>
+<li><p>工具调用不可控。Agent 觉得需要某个工具就调了，但你没给它设边界。让它管理服务器，它可能心血来潮把负载均衡器给删了——因为从它的推理链来看，”减少不必要的组件”是合理的。听起来荒谬，但 LLM 的推理链里这种”逻辑自洽但结果灾难”的情况一点都不罕见。</p>
+</li>
+<li><p>上下文爆炸。Agent 循环每走一步，上下文就膨胀一圈——历史对话、工具返回结果、中间推理过程，全部塞进去。跑个十几轮之后，token 飙升到模型上下文窗口的天花板，Agent 开始丢失关键信息或者做出荒腔走板的判断。更糟的是，有些框架根本没有上下文管理机制，就让它一直膨胀到崩掉。</p>
+</li>
+<li><p>错误不可恢复。Agent 调用了一个工具，工具报错了。然后呢？裸 Agent 的典型行为是把错误信息塞回上下文，让 LLM 再想想。但 LLM 面对错误信息时往往会陷入重复尝试的死循环——用同样的方式再调一次，再失败，再重试。没有退避策略，没有降级方案，一个 tool 调用的失败就能把整个任务卡死。</p>
+</li>
+<li><p>行为不可观测。Agent 跑挂了，你打开日志一看，密密麻麻的文本输出，没有结构化的 trace 链路，没有步骤编号，没有 cost 统计。你甚至不知道它到底是在第三步还是第八步出的错，也不知道那一步到底调了什么工具、传了什么参数。出了问题不知道哪步出错，排查起来就是大海捞针。</p>
+</li>
+<li><p>幻觉导致执行危险操作。这是最让人后怕的。LLM 会”编”出一些不存在的东西，这在聊天场景里顶多是个笑话，但在 Agent 场景里可能是个灾难。举个最直白的例子：Agent 负责管理数据库，用户让它”清理测试数据”，Agent 幻觉出了一个合理的 SQL，执行了 <code>DROP TABLE users</code>——不是 <code>test_users</code>，是 <code>users</code>。表没了。生产数据没了。而且它还觉得自己做对了。</p>
+</li>
+</ul>
+<p>说白了，就是不可靠。</p>
+<p>这些失败模式不是理论推演，每一个都是实际踩过的坑。裸 Agent 就像一个没有刹车、没有仪表盘、没有安全带的车——发动机能转，但你不会开上高速。</p>
+<p>所以问题的本质其实变了：不是”Agent 能不能做”，而是”怎么让 Agent 在可控的范围内做”。这就需要一层东西包在外面。</p>
+<p>Harness 这个词在工程领域用得很广泛，通常翻译成”线束”或者”测试套件”，但在 Agent 的语境下，我更愿意把它理解成包裹在 Agent 外层的工程基础设施——负责控制、监控、恢复。如果 Agent 本身是发动机，Harness 就是围绕发动机搭建的整车系统：油路控制、仪表盘、安全气囊、ABS 防抱死。</p>
+<p>拿工具权限来说。裸 Agent 的问题是所有工具对所有场景一视同仁，但这在生产环境里是不可接受的。Harness 要做的第一件事就是按角色、按场景给工具加权限——Agent 在执行查询任务的时候，不应该有写入和删除的权限；在测试环境里可以随意操作，切到生产环境，所有危险操作必须走审批。最小权限原则，和给服务器做权限管理是同一个逻辑。</p>
+<p>上下文管理是另一个容易踩的坑。裸 Agent 的上下文只增不减，但 Harness 需要一套策略来控制膨胀：滑动窗口，只保留最近 N 轮的完整交互，更早的只保留摘要；让 LLM 自己把长对话压缩成关键信息；把任务目标、用户约束、安全规则这些不能丢的东西钉在 context 头部，确保不管怎么裁剪，核心指令始终在线。这块容易被忽视，但在长链任务里其实是生存必需——上下文一崩，Agent 就等于失忆了。</p>
+<p>再往下就是错误恢复。裸 Agent 遇到错误就卡住，Harness Agent 遇到错误会有一套策略：重试，但不是无脑重试——用指数退避，第一次等 1 秒，第二次等 2 秒，第三次等 4 秒，避免对下游服务造成压力。如果重试几次还是失败，触发降级方案——比如换一个备用的工具或 API。如果降级也不行，断路器跳闸，直接中断当前流程并通知上层，而不是让整个系统在那里空转。这些模式在传统的微服务工程里已经非常成熟了，只不过现在需要搬到 Agent 的场景里重新实现一遍。</p>
+<p>可观测性做的事听起来不性感，但在生产环境里极其重要。结构化日志，每一步的输入输出都有标准化的格式；trace 链路，类似 OpenTelemetry 那种，你能看到 Agent 从第一步到最后一步，每一步调了什么工具、传了什么参数、花了多少 token、返回了什么结果。cost tracking 也很关键——Agent 跑一次任务烧了多少 token、花了多少钱，得有数。不然月底一算账，发现 Agent 的 API 调用费比预期多了两个数量级，那就不是技术问题了，是业务问题。</p>
+<p>还有一件事不得不提：不是所有决策都应该交给 Agent 自主完成。删除操作、大额支出、不可逆的配置变更——这些关键节点，Harness 应该暂停执行，等人类确认之后才继续。这看起来像是”退步”，毕竟 Agent 的卖点就是自主性。但在生产环境里，完全自主和完全不可控之间只有一线之隔。在关键决策前加一个确认步骤，不是对 Agent 能力的不信任，是对业务安全的最低尊重。</p>
+<p>用同一个任务串起来看会更直观。假设任务是：部署一个新版本的服务到生产环境。</p>
+<p>裸 Agent 的版本大概是这样的：Agent 接到任务，开始规划步骤——拉取最新代码、运行测试、构建镜像、部署上线。看起来没问题。但跑到部署那一步的时候，Agent 决定先把旧版本的容器全部停掉再启动新版本——<strong>这确实是一种部署策略，只不过是一种会导致服务中断的策略</strong>。它还顺手把旧的 Docker 镜像清理了。新版本启动之后发现有个配置没对，服务起不来。Agent 想回滚，但旧镜像已经被删了。你去看日志，发现只有一堆 LLM 的文本输出，没有结构化的执行记录，排查了半天才知道是第三步的环境变量写错了。 meanwhile，生产环境已经断了二十分钟。</p>
+<p>Harness Agent 的版本完全不同。同样是部署任务，但在执行之前，Harness 先检查权限——这个 Agent 只有测试环境的写入权限，生产环境的部署操作需要触发确认机制。人类审批通过后，Agent 开始执行，每一步的操作都被记录在结构化的 trace 链路里。部署策略被限制在预设的白名单里——只允许蓝绿部署或滚动更新，不允许一次性停掉所有旧容器。镜像清理被标记为危险操作，必须经过二次确认。如果在任何一步出错——比如新版本启动失败——断路器立即触发，自动回滚到旧版本，同时把错误详情和完整 trace 发给值班人员。</p>
+<p>整个过程里，Agent 的推理能力没变，LLM 还是那个 LLM。但外层的 Harness 确保了：权限有边界、操作有记录、错误有兜底、关键节点有人把关。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>裸 Agent</th>
+<th>Harness Agent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工具权限</td>
+<td>所有工具随时可用</td>
+<td>按场景、角色授权</td>
+</tr>
+<tr>
+<td>上下文管理</td>
+<td>无限膨胀直到崩溃</td>
+<td>滑动窗口 + 摘要压缩</td>
+</tr>
+<tr>
+<td>错误处理</td>
+<td>重复尝试或直接卡死</td>
+<td>重试 + 降级 + 断路器</td>
+</tr>
+<tr>
+<td>可观测性</td>
+<td>文本日志，难以排查</td>
+<td>结构化 trace + cost tracking</td>
+</tr>
+<tr>
+<td>安全控制</td>
+<td>无</td>
+<td>关键操作需人类确认</td>
+</tr>
+</tbody></table>
+<p>一句话：Agent &#x3D; LLM + Tools + Memory，生产级 Agent &#x3D; Agent + Harness。ReAct 给了 Agent 一个能跑的骨架，Harness 给了它上生产的资格。</p>
+<p>骨架搭好了，但光有骨架还不够。一个只会用工具的 Agent，和一个真正理解业务、能基于领域知识做判断的 Agent，中间还差一样东西——知识。下篇聊聊 RAG，聊聊怎么给 Agent 的骨架里注入灵魂。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://maybejustlikethis.github.io">MaybeJustLikeThis</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/">https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="external nofollow noopener noreferrer">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://maybejustlikethis.github.io" target="_blank">MaybeJustLikeThis</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AI/">AI</a></div><div class="post-share"><div class="social-share" data-image="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正"懂"你的数据</div></div><div class="info-2"><div class="info-item-1"> 检索是找到文档，RAG 是让模型基于文档生成正确的回答——这两者之间的距离，就是一整套工程系统。  你让一个 Agent 去查公司的退款政策，它可能会给你两个结果：要么编一个听起来很合理的规则——“7 天无理由退款，需保持商品完好”——但它其实是从训练数据里某个电商 FAQ 学来的，跟你公司一点关系都没有；要么它确实找到了你们公司的退款政策，但那是 2023 年 3 月的旧版本，早在去年 9 月就已经改过了。 这就是 LLM 最根本的两个知识缺陷：知识有截止日期，而且它不知道你公司内部发生了什么。训练数据再丰富，也覆盖不了你企业知识库里的那几十万份文档、不是昨天的产品变更、不是只有内部员工才看得懂的术语表。 上一篇我们聊了 Agent 的骨架——LLM + Tools + Memory + Harness。骨架搭好了，但光有骨架的 Agent 就像一个什么都不知道的新员工：它能用工具、能执行流程，但问它任何业务相关的问题，它要么说”我不知道”，要么更危险——假装知道。 所以怎么让 Agent 真正”懂”你的数据？答案指向一个被说烂了但很少被说清楚的词：RAG。问题在于，大多数人...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E5%86%B0%E5%85%AC%E4%B8%BB%E6%B5%B7%E7%90%B4%E7%83%9F%E8%B6%B4%E5%9C%A8%E6%A1%8C%E5%AD%90%E9%AC%BC%E5%88%804k%E5%A3%81%E7%BA%B8_%E8%8A%B1%E7%8C%AB%E5%A3%81%E7%BA%B8%28huamaobizhi.com%29%20%281%29.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-06-06</div><div class="info-item-2">Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作</div></div><div class="info-2"><div class="info-item-1"> 编排不是让 Agent 变得更聪明，是让它们各自做对的事。  你的 Agent 已经会查数据库了，会写代码了，会发通知了。单看每一项都还不错。但当你让它同时做这三件事——先从数据库查出问题，写一段修复代码，再发邮件通知相关人员——事情就开始失控了。上下文窗口塞满了数据库 schema、代码规范、邮件模板，Agent 开始用写代码的逻辑去组织邮件内容，或者在应该发通知的时候跑回去重新查一遍数据库。你不禁怀疑：这东西单独用的时候明明挺靠谱的？ 单 Agent 的瓶颈不是能力不够，是上下文和角色冲突。一个人再强，也没法同时当产品经理、工程师和测试——你脑子里同时装三套完全不同的指令体系、工具描述和历史记录，最后的结果一定是互相干扰。Agent 也一样。 那什么时候该拆成多 Agent？怎么编排？拆完之后怎么保证不翻车？ 这三篇系列走到这里，第一篇搭了骨架，第二篇注入了知识，这一篇想聊的是——当骨架和知识都不够用的时候，怎么通过编排让多个 Agent 分工协作。 先说清楚一件事：为什么要拆。 答案不是”多个 Agent 更厉害”。说实话，如果你的任务足够聚焦、上下文足够干净，单个 Ag...</div></div></div></a><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-06-06</div><div class="info-item-2">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据</div></div><div class="info-2"><div class="info-item-1"> 检索是找到文档，RAG 是让模型基于文档生成正确的回答——这两者之间的距离，就是一整套工程系统。  你让一个 Agent 去查公司的退款政策，它可能会给你两个结果：要么编一个听起来很合理的规则——“7 天无理由退款，需保持商品完好”——但它其实是从训练数据里某个电商 FAQ 学来的，跟你公司一点关系都没有；要么它确实找到了你们公司的退款政策，但那是 2023 年 3 月的旧版本，早在去年 9 月就已经改过了。 这就是 LLM 最根本的两个知识缺陷：知识有截止日期，而且它不知道你公司内部发生了什么。训练数据再丰富，也覆盖不了你企业知识库里的那几十万份文档、不是昨天的产品变更、不是只有内部员工才看得懂的术语表。 上一篇我们聊了 Agent 的骨架——LLM + Tools + Memory + Harness。骨架搭好了，但光有骨架的 Agent 就像一个什么都不知道的新员工：它能用工具、能执行流程，但问它任何业务相关的问题，它要么说”我不知道”，要么更危险——假装知道。 所以怎么让 Agent 真正”懂”你的数据？答案指向一个被说烂了但很少被说清楚的词：RAG。问题在于，大多数人...</div></div></div></a><a class="pagination-related" href="/2025/07/03/%E5%90%B4%E6%81%A9%E8%BE%BE%E7%9A%84skill%E8%AF%BE%E7%A8%8B%EF%BC%88%E4%B8%80%EF%BC%89/" title="吴恩达的skill课程（一）：Agent Skills到底是什么"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">吴恩达的skill课程（一）：Agent Skills到底是什么</div></div><div class="info-2"><div class="info-item-1">最近花了大概两个多小时把吴恩达在 DeepLearning.AI 上和 Anthropic 合作出的那门《Agent Skills with Anthropic》刷完了。课程本身不复杂，10节课，每节都不长，但信息密度挺高的。本来打算一篇笔记写完，结果发现内容实在太多，还是拆成上下两篇比较合适。 这一篇先聊最核心的问题：Skills 是什么，它解决了什么问题，以及它和 Tools、MCP、Subagents 这些概念到底有什么区别。 Skills 的本质：一个文件夹而已？说起来有点不可思议，Skills 的核心载体就是一个文件夹。 对，就是你在电脑上每天创建的那种文件夹。里面必须有一个 SKILL.md 文件，包含 YAML 头部的名称和描述，以及具体的指令内容。然后你可以选择性加一些子目录——references/ 放参考文档，scripts/ 放执行脚本，assets/ 放资源文件。 就是这么简单。 12345my-skill/├── SKILL.md          # 核心指令（名称 + 描述 + 详细指令）├── references/       # 参考文档├──...</div></div></div></a><a class="pagination-related" href="/2025/12/01/%E6%9C%89%E5%85%B3%E5%9C%A8%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5%E4%B8%ADAI%E7%9A%84%E4%BD%BF%E7%94%A8%E6%96%B9%E6%A1%88/" title="有关在项目实践中AI的使用方案"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-01</div><div class="info-item-2">有关在项目实践中AI的使用方案</div></div><div class="info-2"><div class="info-item-1">引言最近在开发一个学校项目的过程中，我高强度依赖了 Claude Code 进行编程辅助。这段经历给我带来了深刻的启示：虽然 AI 的编码速度惊人，但其生成的代码片段大多停留在 POC（Proof of Concept，概念验证）级别，距离生产环境或商业化的质量标准还有相当大的差距。 更令人警惕的是，如果缺乏有效的人工干预和质量控制，这些看似”可用”的代码在经历几轮迭代后，极易演变成难以维护的”技术债务”——也就是我们常说的”屎山代码”。这促使我深入思考：究竟如何才能在享受 AI 带来的效率提升的同时，确保代码质量不失控？ 为什么 AI 无法”一键生成”？这个问题成了我思考的起点。从纯粹的编码效率来看，AI 无疑是碾压级的存在——几乎没有程序员的打字速度能与 AI 的生成速度相提并论。然而，一个看似矛盾的现象摆在我们面前：为什么如此强大的 AI，却难以一次性输出高质量的、生产就绪的代码呢？ 经过反复实践和深度思考，我识别出了几个关键的制约因素： ❌ LLM 智力不足？这个原因基本可以排除。现在的顶级大模型在代码领域已经达到了中高级工程师的水平，无论是算法实现还是语法规范，都展现出...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/images/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="author-info-name">MaybeJustLikeThis</div><div class="author-info-description">垃圾桶</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/MaybeJustLikeThis"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/MaybeJustLikeThis" target="_blank" title="Github" rel="external nofollow noopener noreferrer"><i class="fab fa-github" style="color: #hdhfbb;"></i></a><a class="social-icon" href="/2926686459@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #000000;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">🤠欢迎来到我的博客！<br>自己找个位置坐叭<br>Be Peace and Love !</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E5%86%B0%E5%85%AC%E4%B8%BB%E6%B5%B7%E7%90%B4%E7%83%9F%E8%B6%B4%E5%9C%A8%E6%A1%8C%E5%AD%90%E9%AC%BC%E5%88%804k%E5%A3%81%E7%BA%B8_%E8%8A%B1%E7%8C%AB%E5%A3%81%E7%BA%B8%28huamaobizhi.com%29%20%281%29.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作">Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/30/%E9%A6%99%E6%B8%AF%E4%B9%8B%E8%A1%8C/" title="香港之行"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="香港之行" loading='lazy'></a><div class="content"><a class="title" href="/2026/05/30/%E9%A6%99%E6%B8%AF%E4%B9%8B%E8%A1%8C/" title="香港之行">香港之行</a><time datetime="2026-05-30T04:00:00.000Z" title="发表于 2026-05-30 12:00:00">2026-05-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/16/%E5%96%84%E6%8A%A4%E5%BF%B5%EF%BC%9A%E8%87%AA%E6%88%91%E7%AE%A1%E7%90%86%EF%BC%8C%E7%AE%A1%E7%9A%84%E6%98%AF%E5%BF%B5%E5%A4%B4/" title="善护念：自我管理，管的是念头"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="善护念：自我管理，管的是念头" loading='lazy'></a><div class="content"><a class="title" href="/2026/05/16/%E5%96%84%E6%8A%A4%E5%BF%B5%EF%BC%9A%E8%87%AA%E6%88%91%E7%AE%A1%E7%90%86%EF%BC%8C%E7%AE%A1%E7%9A%84%E6%98%AF%E5%BF%B5%E5%A4%B4/" title="善护念：自我管理，管的是念头">善护念：自我管理，管的是念头</a><time datetime="2026-05-16T06:00:00.000Z" title="发表于 2026-05-16 14:00:00">2026-05-16</time></div></div></div></div></div></div></main><footer id="footer" style="background: transparent;"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By MaybeJustLikeThis</span></div><div class="footer_custom_text">万语难尽涩于口，祈尔繁芜胜常春</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'MaybeJustLikeThis/MaybeJustLikeThis.github.io',
+      'data-repo-id': 'R_kgDOMiZ_9A',
+      'data-category-id': 'DIC_kwDOMiZ_9M4Cx0A_',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="/"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="支持文章内容和标题搜索" type="text"></div><hr><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

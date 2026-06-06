@@ -1,0 +1,314 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据 | MaybeJustLikeThis</title><meta name="author" content="MaybeJustLikeThis"><meta name="copyright" content="MaybeJustLikeThis"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="纠正&quot;RAG 就是搜索&quot;的误解，展示从 Naive RAG 到生产级 RAG pipeline 的完整演进路径">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据">
+<meta property="og:url" content="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/index.html">
+<meta property="og:site_name" content="MaybeJustLikeThis">
+<meta property="og:description" content="纠正&quot;RAG 就是搜索&quot;的误解，展示从 Naive RAG 到生产级 RAG pipeline 的完整演进路径">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg">
+<meta property="article:published_time" content="2026-06-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-06T06:57:07.277Z">
+<meta property="article:author" content="MaybeJustLikeThis">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Agent 工程化（二）：RAG 不是搜索——让 Agent 真正\"懂\"你的数据",
+  "url": "https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/",
+  "image": "https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg",
+  "datePublished": "2026-06-05T16:00:00.000Z",
+  "dateModified": "2026-06-06T06:57:07.277Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "MaybeJustLikeThis",
+      "url": "https://maybejustlikethis.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/images/logo.png"><link rel="canonical" href="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//busuanzi.ibruce.info"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.json","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Agent 工程化（二）：RAG 不是搜索——让 Agent 真正"懂"你的数据',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="web_bg" style="background-image: url(https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E6%9C%88%E7%89%99%E5%B0%8F%E6%8F%90%E7%90%B4.jpg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/images/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background: transparent;"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.png" alt="Logo" loading='lazy'><span class="site-name">MaybeJustLikeThis</span></a><a class="nav-page-title" href="/"><span class="site-name">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-06-06T06:57:07.277Z" title="更新于 2026-06-06 14:57:07">2026-06-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AI/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>13分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id data-flag-title><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
+<p>检索是找到文档，RAG 是让模型基于文档生成正确的回答——这两者之间的距离，就是一整套工程系统。</p>
+</blockquote>
+<p>你让一个 Agent 去查公司的退款政策，它可能会给你两个结果：要么编一个听起来很合理的规则——“7 天无理由退款，需保持商品完好”——但它其实是从训练数据里某个电商 FAQ 学来的，跟你公司一点关系都没有；要么它确实找到了你们公司的退款政策，但那是 2023 年 3 月的旧版本，早在去年 9 月就已经改过了。</p>
+<p>这就是 LLM 最根本的两个知识缺陷：知识有截止日期，而且它不知道你公司内部发生了什么。训练数据再丰富，也覆盖不了你企业知识库里的那几十万份文档、不是昨天的产品变更、不是只有内部员工才看得懂的术语表。</p>
+<p>上一篇我们聊了 Agent 的骨架——LLM + Tools + Memory + Harness。骨架搭好了，但光有骨架的 Agent 就像一个什么都不知道的新员工：它能用工具、能执行流程，但问它任何业务相关的问题，它要么说”我不知道”，要么更危险——假装知道。</p>
+<p>所以怎么让 Agent 真正”懂”你的数据？答案指向一个被说烂了但很少被说清楚的词：RAG。问题在于，大多数人理解的 RAG 就是”接个向量数据库”，这距离真正能用的 RAG pipeline 差了十万八千里。</p>
+<p>先回到最基本的。RAG 这四个字母是 Retrieval-Augmented Generation 的缩写，直译就是”检索增强生成”。直觉上其实很朴素：用户问了一个问题，你先从知识库里把相关的内容找出来，然后把这些内容连同问题一起交给 LLM，让它基于这些内容生成回答。四个步骤——Query、Retrieve、Augment、Generate——说白了就是：提问、检索、拼上下文、生成回答。</p>
+<p>但这和”搜索”有什么区别？</p>
+<p>区别大了。搜索是”找到相关文档，你自己看”。RAG 是”找到相关文档，让 LLM 读完之后替你总结、推理、回答”。搜索结果是一堆链接，RAG 的产出是一段经过理解之后的回答。这个区别听起来微妙，但在工程上意味着完全不同的要求和复杂度——搜索只需要召回率，RAG 还需要检索结果的质量足够好，好到 LLM 能基于它生成准确的回答，而不是被噪声带偏。</p>
+<p>可惜现实中，人们对 RAG 的误解比理解多。最常见的一个：把 RAG 等同于向量搜索。这当然可以理解——大部分 RAG 教程的第一步都是”把文档切成 chunk 然后塞进向量数据库”，很容易让人觉得向量搜索就是 RAG 的全部。但向量搜索只是检索环节的一种手段，检索本身又只是 RAG 四步中的一步。Query 怎么理解、检索结果怎么排序和过滤、喂给 LLM 之前怎么组装上下文、生成之后怎么验证回答质量——每一个环节都能决定最终效果。把向量搜索等同于 RAG，就好比把”去超市买食材”等同于”做了一桌菜”。</p>
+<p>还有一些更微妙的认知偏差。比如觉得 chunk 切得越细检索精度就越高——这听起来有道理，但粒度太细会切断语义完整性。你把一段文字切成三块，检索命中的可能只是其中一块，LLM 看到的信息是残缺的，回答自然也是残缺的。粒度选择本质上是个工程权衡，要看数据类型和查询模式，不是越细越好。</p>
+<p>更隐蔽的一个误解是觉得 RAG 能解决所有知识问题。其实如果你想让模型学会某种风格或格式——比如用你们公司的文档风格来写东西——few-shot 或者 fine-tuning 可能更直接。RAG 解决的是”模型不知道某个事实”的问题，不是”模型不知道怎么做”的问题，这两件事的解法不该混为一谈。</p>
+<p>搞清楚了 RAG 不是什么，接下来聊聊 RAG 怎么从”能跑”变成”能用”。这部分会比较技术，但我觉得理解每个环节的动机比记住具体方案更重要。</p>
+<p>最朴素的 RAG——通常叫 Naive RAG——流程很简单：把文档切成固定大小的 chunk，用 embedding 模型转成向量，存进向量数据库。用户提问的时候，把问题也转成向量，用余弦相似度在向量库里找最接近的 top-K 个 chunk，拼在一起塞给 LLM，让它生成回答。</p>
+<p>这个流程跑通不难。但跑通之后你会发现几个很具体的问题。</p>
+<p>先说检索噪声。余弦相似度找出来的 top-10 个 chunk 里，可能只有两三个是真正相关的，剩下的只是”向量空间上离得比较近”而已。LLM 拿到一堆半相关不相关的上下文，很容易被带偏——它可能从某个噪声 chunk 里抓了一个看起来相关但已经过时的数据，然后信心满满地写进了回答。</p>
+<p>再说 chunk 边界的问题。你按 500 个 token 切了一段文字，一个完整的论述可能被切成两半——前半段说”我们的产品分为三个版本”，后半段才展开每个版本的定价。检索只命中了前半段，LLM 根本看不到完整的信息。</p>
+<p>更致命的是多跳问题。用户问”2024 年 Q3 我们在欧洲市场的退货率是多少”，这个回答可能需要先找到 Q3 的销售数据，再找到欧洲市场的退货统计，然后交叉计算。但 Naive RAG 只做一次检索，它大概率找到的是一份笼统的市场报告，里面的数据既不够具体也不是你要的季度。</p>
+<p>这几个问题不是孤立的，它们指向同一个结论：Naive RAG 的瓶颈不在 LLM 的生成能力，而在检索的质量。检索垃圾进去，生成的也是垃圾。</p>
+<p>所以从 Naive RAG 到 Advanced RAG 的演进，核心就是围绕检索的三个阶段做工程优化。</p>
+<p>检索前的优化目标是让”问题”本身变得更适合检索。用户的原始 query 往往不是最优的检索词——用户问”怎么退货”，但你们的知识库里写的是”退换货流程与售后指引”，关键词完全不匹配。Query 改写就是用 LLM 把用户的自然语言问题转成更适合检索的形式，比如把”怎么退货”改成”退换货流程 售后指引 步骤”。</p>
+<p>如果问题比较复杂，Query 分解会更有效——把一个复杂问题拆成多个子问题分别检索再合并。比如”对比我们三个产品的定价策略”可以拆成三个独立的检索请求。还有一个我觉得挺巧妙的技巧叫 HyDE（Hypothetical Document Embedding）：先让 LLM 根据问题”猜”一个答案，然后用这个假答案去做检索。原理很直觉——LLM 猜的答案在语义上和真实文档更接近，用答案去检索比用问题去检索效果更好。</p>
+<p>检索环节的改进核心思路是”不要只靠一种检索方式”。向量检索擅长捕捉语义相似性——用户说”怎么退款”能匹配到”退换货流程”，因为语义上接近。但它对精确匹配不太行——用户搜一个特定的产品编号”SKU-28473”，向量检索可能完全找不到。BM25 关键词检索刚好反过来，精确匹配很强但语义理解弱。所以生产环境里最常见的做法是混合检索：向量检索和 BM25 各召回一批候选，然后合并去重。效果比单独用任何一种都好。</p>
+<p>光召回还不够。混合检索可能召回了 50 个候选 chunk，但 LLM 的上下文窗口有限，你不可能全塞进去。所以需要重排序（Reranking）：先用一个轻量模型做粗筛，保留 20-30 个候选，再用一个更精确但更慢的 cross-encoder 模型精排，最终只保留最相关的 5-8 个。cross-encoder 的原理是同时看 query 和文档内容做注意力计算，精度比向量相似度那种”各自编码再比较”的方式高一个档次——类似招聘，先海选简历，再面试细筛。另外，元数据过滤在这一步也很关键：如果用户问的是 2024 年的政策，那 2023 年的文档直接过滤掉，不需要进入排序环节。</p>
+<p>检索之后的事同样重要。不是所有检索结果都值得放进 LLM 的上下文。上下文压缩（Context Compression）会去掉检索结果中的冗余信息——同一件事被三份文档重复描述了，只需要保留最完整的一份。相关性校验会更进一步：用一个小模型判断每个检索结果是否真的和用户问题相关，不相关的直接丢弃。最后是引用溯源——让 LLM 在生成回答时标注每句话的来源，这样用户可以验证回答的可靠性。这一步在知识密集型场景里几乎是必须的，你不能让 Agent 给出一段无法溯源的回答，那跟幻觉没什么区别。</p>
+<p>说到检索质量，有一个经常被低估但直接影响效果下限的决策：chunk 怎么切。</p>
+<p>最简单的方案是固定长度切割——每 500 个 token 一刀，不管内容结构。实现起来最快，但语义很容易被切断。一个完整的操作步骤可能横跨两个 chunk，检索命中了其中一个，LLM 看到的就是不完整的指令。</p>
+<p>更自然的做法是利用文档本身的结构信息——标题、段落、换行符——来决定切分边界。这样每个 chunk 至少是一个完整的意思，语义完整性好得多。代价是 chunk 大小不均匀，有的段落可能就两句话，有的章节可能上千字，给检索的均匀性带来一些挑战。语义切割（Semantic Chunking）的思路更精细：用 embedding 计算相邻句子的相似度，相似度突然下降的地方就说明话题切换了，那就是天然的边界。效果最好，但计算成本也最大——每句话都要算一遍 embedding。</p>
+<p>实践中用得最多的是 LangChain 的递归切割——先按章节切，太长就按段落切，还长就按句子切，逐层往下直到大小合理。说白了就是前几种方案的组合，兼顾结构完整性和大小均匀性。</p>
+<p>没有银弹。技术文档结构清晰，按章节切就够了；客服对话记录结构松散，可能需要语义切割；产品描述短而多，固定长度反而最简单有效。务实地说，先按段落切、跑通第一版、看检索效果，遇到具体问题再针对性优化——比一上来就追求最优解靠谱得多。</p>
+<p>把上面这些串起来，看一个生产级的 RAG pipeline 长什么样。</p>
+<p>场景是企业知识库问答系统。数据来源包括产品文档、内部 Wiki、技术规范、历史工单记录。用户是公司内部的客服和运营，他们需要快速查到准确的产品政策和技术参数。</p>
+<p>整个系统分两个阶段运行。离线索引阶段：先把各种格式的文档解析成纯文本——PDF 要 OCR，Wiki 要爬取，表格要转成结构化的文字描述。然后按”段落优先、递归兜底”的策略切块。切好的 chunk 经过 embedding 模型转成向量，写入向量数据库（比如 Milvus 或 Pinecone），同时构建一份全文索引用于 BM25 检索。每个 chunk 还会附带元数据：文档标题、来源、更新时间、所属部门、权限级别。这些元数据在后面的检索过滤里会派上大用场。</p>
+<p>在线查询阶段的流程大致是这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">rag_pipeline</span>(<span class="params">query: <span class="built_in">str</span>, user_context: <span class="built_in">dict</span></span>) -&gt; Answer:</span><br><span class="line">    <span class="comment"># 1. Query 改写：把口语化的问题转成结构化检索词</span></span><br><span class="line">    rewritten_query = query_rewriter.rewrite(query)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 2. 混合检索：向量 + BM25，各召回 top-20</span></span><br><span class="line">    vector_results = vector_store.search(rewritten_query, top_k=<span class="number">20</span>)</span><br><span class="line">    bm25_results = bm25_index.search(rewritten_query, top_k=<span class="number">20</span>)</span><br><span class="line">    candidates = merge_and_dedup(vector_results, bm25_results)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 3. 元数据过滤：按时间、来源、权限缩小范围</span></span><br><span class="line">    candidates = metadata_filter(</span><br><span class="line">        candidates,</span><br><span class="line">        time_range=user_context.get(<span class="string">&quot;time_range&quot;</span>),</span><br><span class="line">        department=user_context.get(<span class="string">&quot;department&quot;</span>),</span><br><span class="line">        access_level=user_context.get(<span class="string">&quot;access_level&quot;</span>),</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 4. 重排序：cross-encoder 精排，保留 top-5</span></span><br><span class="line">    ranked_results = reranker.rerank(query, candidates, top_k=<span class="number">5</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 5. 上下文组装：去重、压缩、拼接</span></span><br><span class="line">    context = context_compressor.compress(ranked_results)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 6. LLM 生成：基于上下文回答问题</span></span><br><span class="line">    answer = llm.generate(query=query, context=context)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 7. 引用标注：给回答中的每个断言标注来源</span></span><br><span class="line">    cited_answer = citation_annotator.annotate(answer, ranked_results)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> cited_answer</span><br></pre></td></tr></table></figure>
+
+<p>这里有几个值得说的工程决策。为什么选混合检索而不是纯向量？因为企业知识库里大量查询是精确匹配的——员工搜一个具体的产品型号或政策编号，BM25 比向量检索靠谱得多。为什么用 cross-encoder 重排序而不是直接用向量相似度？因为 cross-encoder 是交叉编码，会同时看 query 和文档内容做注意力计算，精度比”各自编码再比较”高一个档次。代价是慢，所以只对粗筛后的少量候选做精排，把延迟控制在可接受的范围。至于为什么按段落切而不是语义切割——其实产品文档结构清晰的时候，段落本身就是很好的语义边界，没必要引入额外的 embedding 计算成本。</p>
+<p>性能和成本的权衡贯穿始终。Query 改写和 HyDE 都要额外调一次 LLM，重排序要跑 cross-encoder——每一层都增加延迟和成本。如果查询量不大、对延迟不敏感，全上没问题。但如果是高并发的在线服务，就得做取舍：Query 改写保留，HyDE 砍掉；粗筛用向量相似度代替 cross-encoder 的第一轮；上下文压缩用简单的去重代替 LLM 摘要。说白了，不是所有环节都需要最贵的方案，够用就行。</p>
+<p>回到 Agent 的视角来看 RAG。</p>
+<p>RAG 不是一个独立系统，它是 Agent 的知识基础设施。上一篇我们聊了 Agent 的骨架——LLM 负责推理，Tools 负责执行，Memory 负责记忆，Harness 负责安全。RAG 解决的是另一个维度的问题：Agent 的推理需要事实依据，而这些事实不可能全靠训练数据来提供。</p>
+<p>可以用一个简单的分工来理解它们的关系。Agent 是执行者，决定做什么、怎么做。RAG 是知识源，在 Agent 需要事实依据的时候提供弹药。Harness 是安全网，确保 Agent 的行为在可控范围内。三层缺一不可：没有 RAG 的 Agent 是一个不知道任何业务事实的工具执行器，没有 Harness 的 Agent 是一个不可控的风险源。</p>
+<p>那 Agent 什么时候该用 RAG？简单说，当任务需要”知道某个具体事实”的时候——查政策、找参数、定位文档。需要”执行某个操作”的时候该用工具——发邮件、查数据库、调用 API。需要”回忆之前做过什么”的时候该用记忆——追踪任务进度、延续对话上下文。三种信息来源各有边界，搞混了效果就差。</p>
+<p>单个 Agent 配上 RAG 和 Harness，已经能做不少事了。但现实世界里的任务往往不是单个 Agent 能扛住的——一个复杂的企业流程可能涉及多个系统的交互、多种角色的协作、多个阶段的串并联。单个 Agent 再强，也有天花板。下一篇我们就聊聊，当天花板真的撞到了，怎么通过多 Agent 编排来突破它。</p>
+<p>RAG 的核心从来不是接个向量数据库。从 Query 理解到检索策略、从 Chunk 切分到重排序、从上下文组装到引用溯源——每一个环节都在做同一件事：让 LLM 拿到最好的素材，然后生成最准确的回答。素材质量决定了回答质量的上限，而每个工程环节都在往上推这个上限。</p>
+<p>当然，并不是每个场景都需要全套组件。先跑通 Naive RAG，有了基线数据，再根据具体问题逐个优化。检索噪声大就加重排序，语义切断就调 Chunk 策略，多跳问题就加 Query 分解。不要一上来就把所有高级组件全堆上去——每一层都有成本，每一层都可能引入新的 bug。<strong>先让它跑起来，再让它跑得好</strong>。</p>
+<p>这说到底是个工程问题，不是什么魔法。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://maybejustlikethis.github.io">MaybeJustLikeThis</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/">https://maybejustlikethis.github.io/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="external nofollow noopener noreferrer">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://maybejustlikethis.github.io" target="_blank">MaybeJustLikeThis</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AI/">AI</a></div><div class="post-share"><div class="social-share" data-image="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</div></div><div class="info-2"><div class="info-item-1"> 能做和能上线之间，隔着一条叫”可靠性”的鸿沟。  ChatGPT 刚出来那会儿，很多人都有过一种错觉：这东西太强了，给它接上 API、挂上工具，是不是就能代替人干活了？我自己也这么想过。你让它帮你查个天气、订个外卖，它确实能聊得头头是道，感觉离”数字员工”就差一步。 但真动手做过 Agent 项目的人都知道，从”能聊天”到”能干活”这一步，远比想象中难。差距不在提示词写得好不好——Chatbot 只需要把话说对，Agent 还要把事做对。前者出错了你最多翻个白眼，后者出错了你可能是数据库没了。 所以一个能干活的 Agent，最小可行结构是什么样的？从 Demo 里跑通一个 Agent 到真正把它推上生产，中间到底缺了什么？这篇文章想聊聊这件事。 先从最基本的结构讲起。不管外面包装得多花哨，一个 Agent 的核心循环其实就这么简单： 12345while not done:    thought = llm.think(context)      # 想    action = llm.decide(thought)      # 决定做什么    observation = ...</div></div></div></a><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E5%86%B0%E5%85%AC%E4%B8%BB%E6%B5%B7%E7%90%B4%E7%83%9F%E8%B6%B4%E5%9C%A8%E6%A1%8C%E5%AD%90%E9%AC%BC%E5%88%804k%E5%A3%81%E7%BA%B8_%E8%8A%B1%E7%8C%AB%E5%A3%81%E7%BA%B8%28huamaobizhi.com%29%20%281%29.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作</div></div><div class="info-2"><div class="info-item-1"> 编排不是让 Agent 变得更聪明，是让它们各自做对的事。  你的 Agent 已经会查数据库了，会写代码了，会发通知了。单看每一项都还不错。但当你让它同时做这三件事——先从数据库查出问题，写一段修复代码，再发邮件通知相关人员——事情就开始失控了。上下文窗口塞满了数据库 schema、代码规范、邮件模板，Agent 开始用写代码的逻辑去组织邮件内容，或者在应该发通知的时候跑回去重新查一遍数据库。你不禁怀疑：这东西单独用的时候明明挺靠谱的？ 单 Agent 的瓶颈不是能力不够，是上下文和角色冲突。一个人再强，也没法同时当产品经理、工程师和测试——你脑子里同时装三套完全不同的指令体系、工具描述和历史记录，最后的结果一定是互相干扰。Agent 也一样。 那什么时候该拆成多 Agent？怎么编排？拆完之后怎么保证不翻车？ 这三篇系列走到这里，第一篇搭了骨架，第二篇注入了知识，这一篇想聊的是——当骨架和知识都不够用的时候，怎么通过编排让多个 Agent 分工协作。 先说清楚一件事：为什么要拆。 答案不是”多个 Agent 更厉害”。说实话，如果你的任务足够聚焦、上下文足够干净，单个 Ag...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E5%86%B0%E5%85%AC%E4%B8%BB%E6%B5%B7%E7%90%B4%E7%83%9F%E8%B6%B4%E5%9C%A8%E6%A1%8C%E5%AD%90%E9%AC%BC%E5%88%804k%E5%A3%81%E7%BA%B8_%E8%8A%B1%E7%8C%AB%E5%A3%81%E7%BA%B8%28huamaobizhi.com%29%20%281%29.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-06-06</div><div class="info-item-2">Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作</div></div><div class="info-2"><div class="info-item-1"> 编排不是让 Agent 变得更聪明，是让它们各自做对的事。  你的 Agent 已经会查数据库了，会写代码了，会发通知了。单看每一项都还不错。但当你让它同时做这三件事——先从数据库查出问题，写一段修复代码，再发邮件通知相关人员——事情就开始失控了。上下文窗口塞满了数据库 schema、代码规范、邮件模板，Agent 开始用写代码的逻辑去组织邮件内容，或者在应该发通知的时候跑回去重新查一遍数据库。你不禁怀疑：这东西单独用的时候明明挺靠谱的？ 单 Agent 的瓶颈不是能力不够，是上下文和角色冲突。一个人再强，也没法同时当产品经理、工程师和测试——你脑子里同时装三套完全不同的指令体系、工具描述和历史记录，最后的结果一定是互相干扰。Agent 也一样。 那什么时候该拆成多 Agent？怎么编排？拆完之后怎么保证不翻车？ 这三篇系列走到这里，第一篇搭了骨架，第二篇注入了知识，这一篇想聊的是——当骨架和知识都不够用的时候，怎么通过编排让多个 Agent 分工协作。 先说清楚一件事：为什么要拆。 答案不是”多个 Agent 更厉害”。说实话，如果你的任务足够聚焦、上下文足够干净，单个 Ag...</div></div></div></a><a class="pagination-related" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-06-06</div><div class="info-item-2">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</div></div><div class="info-2"><div class="info-item-1"> 能做和能上线之间，隔着一条叫”可靠性”的鸿沟。  ChatGPT 刚出来那会儿，很多人都有过一种错觉：这东西太强了，给它接上 API、挂上工具，是不是就能代替人干活了？我自己也这么想过。你让它帮你查个天气、订个外卖，它确实能聊得头头是道，感觉离”数字员工”就差一步。 但真动手做过 Agent 项目的人都知道，从”能聊天”到”能干活”这一步，远比想象中难。差距不在提示词写得好不好——Chatbot 只需要把话说对，Agent 还要把事做对。前者出错了你最多翻个白眼，后者出错了你可能是数据库没了。 所以一个能干活的 Agent，最小可行结构是什么样的？从 Demo 里跑通一个 Agent 到真正把它推上生产，中间到底缺了什么？这篇文章想聊聊这件事。 先从最基本的结构讲起。不管外面包装得多花哨，一个 Agent 的核心循环其实就这么简单： 12345while not done:    thought = llm.think(context)      # 想    action = llm.decide(thought)      # 决定做什么    observation = ...</div></div></div></a><a class="pagination-related" href="/2025/07/03/%E5%90%B4%E6%81%A9%E8%BE%BE%E7%9A%84skill%E8%AF%BE%E7%A8%8B%EF%BC%88%E4%B8%80%EF%BC%89/" title="吴恩达的skill课程（一）：Agent Skills到底是什么"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-03</div><div class="info-item-2">吴恩达的skill课程（一）：Agent Skills到底是什么</div></div><div class="info-2"><div class="info-item-1">最近花了大概两个多小时把吴恩达在 DeepLearning.AI 上和 Anthropic 合作出的那门《Agent Skills with Anthropic》刷完了。课程本身不复杂，10节课，每节都不长，但信息密度挺高的。本来打算一篇笔记写完，结果发现内容实在太多，还是拆成上下两篇比较合适。 这一篇先聊最核心的问题：Skills 是什么，它解决了什么问题，以及它和 Tools、MCP、Subagents 这些概念到底有什么区别。 Skills 的本质：一个文件夹而已？说起来有点不可思议，Skills 的核心载体就是一个文件夹。 对，就是你在电脑上每天创建的那种文件夹。里面必须有一个 SKILL.md 文件，包含 YAML 头部的名称和描述，以及具体的指令内容。然后你可以选择性加一些子目录——references/ 放参考文档，scripts/ 放执行脚本，assets/ 放资源文件。 就是这么简单。 12345my-skill/├── SKILL.md          # 核心指令（名称 + 描述 + 详细指令）├── references/       # 参考文档├──...</div></div></div></a><a class="pagination-related" href="/2025/12/01/%E6%9C%89%E5%85%B3%E5%9C%A8%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5%E4%B8%ADAI%E7%9A%84%E4%BD%BF%E7%94%A8%E6%96%B9%E6%A1%88/" title="有关在项目实践中AI的使用方案"><img class="cover" src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-12-01</div><div class="info-item-2">有关在项目实践中AI的使用方案</div></div><div class="info-2"><div class="info-item-1">引言最近在开发一个学校项目的过程中，我高强度依赖了 Claude Code 进行编程辅助。这段经历给我带来了深刻的启示：虽然 AI 的编码速度惊人，但其生成的代码片段大多停留在 POC（Proof of Concept，概念验证）级别，距离生产环境或商业化的质量标准还有相当大的差距。 更令人警惕的是，如果缺乏有效的人工干预和质量控制，这些看似”可用”的代码在经历几轮迭代后，极易演变成难以维护的”技术债务”——也就是我们常说的”屎山代码”。这促使我深入思考：究竟如何才能在享受 AI 带来的效率提升的同时，确保代码质量不失控？ 为什么 AI 无法”一键生成”？这个问题成了我思考的起点。从纯粹的编码效率来看，AI 无疑是碾压级的存在——几乎没有程序员的打字速度能与 AI 的生成速度相提并论。然而，一个看似矛盾的现象摆在我们面前：为什么如此强大的 AI，却难以一次性输出高质量的、生产就绪的代码呢？ 经过反复实践和深度思考，我识别出了几个关键的制约因素： ❌ LLM 智力不足？这个原因基本可以排除。现在的顶级大模型在代码领域已经达到了中高级工程师的水平，无论是算法实现还是语法规范，都展现出...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/images/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="author-info-name">MaybeJustLikeThis</div><div class="author-info-description">垃圾桶</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">29</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="external nofollow noopener noreferrer" href="https://github.com/MaybeJustLikeThis"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/MaybeJustLikeThis" target="_blank" title="Github" rel="external nofollow noopener noreferrer"><i class="fab fa-github" style="color: #hdhfbb;"></i></a><a class="social-icon" href="/2926686459@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #000000;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">🤠欢迎来到我的博客！<br>自己找个位置坐叭<br>Be Peace and Love !</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E5%86%B0%E5%85%AC%E4%B8%BB%E6%B5%B7%E7%90%B4%E7%83%9F%E8%B6%B4%E5%9C%A8%E6%A1%8C%E5%AD%90%E9%AC%BC%E5%88%804k%E5%A3%81%E7%BA%B8_%E8%8A%B1%E7%8C%AB%E5%A3%81%E7%BA%B8%28huamaobizhi.com%29%20%281%29.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%E7%BC%96%E6%8E%92%E7%9A%84%E6%9C%AC%E8%B4%A8/" title="Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作">Agent 工程化（三）：编排的本质——从单 Agent 到多 Agent 协作</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89RAG%E4%B8%8D%E6%98%AF%E6%90%9C%E7%B4%A2/" title="Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据">Agent 工程化（二）：RAG 不是搜索——让 Agent 真正&quot;懂&quot;你的数据</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的" loading='lazy'></a><div class="content"><a class="title" href="/2026/06/06/Agent%E5%B7%A5%E7%A8%8B%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%E4%BB%8EReact%E5%88%B0Harness/" title="Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的">Agent 工程化（一）：从 ReAct 到 Harness——Agent 的骨架是怎么搭出来的</a><time datetime="2026-06-05T16:00:00.000Z" title="发表于 2026-06-06 00:00:00">2026-06-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/30/%E9%A6%99%E6%B8%AF%E4%B9%8B%E8%A1%8C/" title="香港之行"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E5%87%89%E5%AE%AB%E6%98%A5%E6%97%A5%E7%9A%84%E5%BF%A7%E9%83%81%E3%80%8B.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="香港之行" loading='lazy'></a><div class="content"><a class="title" href="/2026/05/30/%E9%A6%99%E6%B8%AF%E4%B9%8B%E8%A1%8C/" title="香港之行">香港之行</a><time datetime="2026-05-30T04:00:00.000Z" title="发表于 2026-05-30 12:00:00">2026-05-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/05/16/%E5%96%84%E6%8A%A4%E5%BF%B5%EF%BC%9A%E8%87%AA%E6%88%91%E7%AE%A1%E7%90%86%EF%BC%8C%E7%AE%A1%E7%9A%84%E6%98%AF%E5%BF%B5%E5%A4%B4/" title="善护念：自我管理，管的是念头"><img src="https://yunding-ljt.oss-cn-beijing.aliyuncs.com/%E3%80%8A%E9%AC%BC%E5%88%80%E3%80%8B%E9%AC%BC%E5%88%80%E6%B5%B7%E7%90%B4%E7%83%9F.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="善护念：自我管理，管的是念头" loading='lazy'></a><div class="content"><a class="title" href="/2026/05/16/%E5%96%84%E6%8A%A4%E5%BF%B5%EF%BC%9A%E8%87%AA%E6%88%91%E7%AE%A1%E7%90%86%EF%BC%8C%E7%AE%A1%E7%9A%84%E6%98%AF%E5%BF%B5%E5%A4%B4/" title="善护念：自我管理，管的是念头">善护念：自我管理，管的是念头</a><time datetime="2026-05-16T06:00:00.000Z" title="发表于 2026-05-16 14:00:00">2026-05-16</time></div></div></div></div></div></div></main><footer id="footer" style="background: transparent;"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2023 - 2026 By MaybeJustLikeThis</span></div><div class="footer_custom_text">万语难尽涩于口，祈尔繁芜胜常春</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'MaybeJustLikeThis/MaybeJustLikeThis.github.io',
+      'data-repo-id': 'R_kgDOMiZ_9A',
+      'data-category-id': 'DIC_kwDOMiZ_9M4Cx0A_',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="/"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="支持文章内容和标题搜索" type="text"></div><hr><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
